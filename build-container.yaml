@@ -1,0 +1,37 @@
+functions:
+- id: azure
+  image: gcr.io/direktiv/apps/azure:1.0
+  type: knative-workflow
+- id: git
+  image: gcr.io/direktiv/apps/git:1.0
+  type: knative-workflow
+
+states:
+
+
+# - id: clone
+#   type: action
+#   action:
+#     function: git
+#     input: 
+#       commands:
+#       - command: git clone --depth 1 https://github.com/jensg-st/azure-containerapp.git
+
+
+  
+
+- id: azure
+  type: action
+  action:
+    function: azure
+    secrets: ["azureUser", "azurePassword", "azureTenantID"]
+    input: 
+      auth:
+        user: jq(.secrets.azureUser)
+        password: jq(.secrets.azurePassword)
+        tenant: jq(.secrets.azureTenantID)
+      commands:
+      - command: az acr build -r MyRegistry
+
+
+# az acr build --registry direktiv https://github.com/jensg-st/azure-containerapp.git -f service/Dockerfile
