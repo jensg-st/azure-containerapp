@@ -48,13 +48,13 @@ states:
         tenant: jq(.secrets.azureTenantID)
       commands:
       - command: >
-          az containerapp env create --name jq(."io.direktiv.containerapp.create".function) 
+          az containerapp env create --name jq(."io.direktiv.containerapp.create".function | sub("/"; "-")) 
             --resource-group jq(.secrets.azureResourceGroup) --location="West Europe"
       - command: >
           az containerapp create --ingress external --resource-group jq(.secrets.azureResourceGroup)
-           --name jq(."io.direktiv.containerapp.create".function) 
+           --name jq(."io.direktiv.containerapp.create".function | sub("/"; "-")) 
            --image jq(."io.direktiv.containerapp.create".container)
-           --target-port 8080 --environment jq(."io.direktiv.containerapp.create".function)
+           --target-port 8080 --environment jq(."io.direktiv.containerapp.create".function | sub("/"; "-"))
       - command: az containerapp show -n jq(."io.direktiv.containerapp.create".function) -g app-svc
     retries:
       max_attempts: 6

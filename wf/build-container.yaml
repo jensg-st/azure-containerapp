@@ -2,7 +2,7 @@
 # It then requests a test container app instance for testing
 # After running the container app it executes tests
 #
-# echo '{ "function": "blog/service", "repository": "https://github.com/jensg-st/azure-containerapp.git" }' | direktiv-sync exec build-container.yaml
+# echo '{ "function": "blog/service", "repository": "https://github.com/jensg-st/azure-containerapp" }' | direktiv-sync exec build-container.yaml
 functions:
 - id: azure
   image: gcr.io/direktiv/apps/azure:1.0
@@ -20,15 +20,7 @@ states:
         title: container function
       repository:
         type: string
-        title: repository name
-  transition: build
-  
-- id: build
-  type: action
-  action:
-    function: azure
-    secrets: ["azureUser", "azurePassword", "azureTenantID"]
-    input: 
+        title: repository namehttps://github.com/karatelabs/karate.git
       auth:
         user: jq(.secrets.azureUser)
         password: jq(.secrets.azurePassword)
@@ -45,7 +37,7 @@ states:
     data: ''
     context:
       function: jq(.function)
-      container: direktiv.azurecr.io/jq(.repository):latest
+      container: direktiv.azurecr.io/jq(.function):latest
   transition: wait
 
 
