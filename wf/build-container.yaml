@@ -45,7 +45,7 @@ states:
     data: ''
     context:
       function: jq(.function)
-      container: direktiv.azurecr.io/jq(.repository):latest
+      container: direktiv.azurecr.io/jq(.function):latest
   transition: wait
 
 
