@@ -21,10 +21,6 @@ functions:
 - id: azure
   image: gcr.io/direktiv/apps/azure:1.0
   type: knative-workflow
-- id: delete
-  workflow: delete
-  type: subflow
-
 
 # Flow waits for a cloudevent of type 'io.direktiv.containerapp.create'
 start:
@@ -55,7 +51,7 @@ states:
            --name jq(."io.direktiv.containerapp.create".function | sub("/"; "-")) 
            --image jq(."io.direktiv.containerapp.create".container)
            --target-port 8080 --environment jq(."io.direktiv.containerapp.create".function | sub("/"; "-"))
-      - command: az containerapp show -n jq(."io.direktiv.containerapp.create".function) -g app-svc
+      - command: az containerapp show -n jq(."io.direktiv.containerapp.create".function | sub("/"; "-")) -g app-svc
     retries:
       max_attempts: 6
       delay: PT30S
@@ -92,9 +88,20 @@ states:
     transition: delete-app
 
 - id: delete-app
-  log: deleting app jq(.function)
   type: action
   action: 
-    function: delete
+    function: azure
+    secrets: ["azureUser", "azurePassword", "azureTenantID"]
     input:
-      function: 'jq(.function)'
+      auth:
+        user: jq(.secrets.azureUser)
+        password: jq(.secrets.azurePassword)
+        tenant: jq(.secrets.azureTenantID)
+      commands:
+      - command: az containerapp delete --name jq(.function | sub("/"; "-")) --resource-group app-svc --yes
+      - command: az containerapp env delete --name jq(.function | sub("/"; "-")) --resource-group app-svc --yes
+    retries:
+      max_attempts: 6
+      delay: PT30S
+      codes: [".*"]
+  

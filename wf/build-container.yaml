@@ -2,7 +2,7 @@
 # It then requests a test container app instance for testing
 # After running the container app it executes tests
 #
-# echo '{ "function": "blog/service", "repository": "https://github.com/jensg-st/azure-containerapp.git" }' | direktiv-sync exec build-container.yaml
+# echo '{ "function": "blog/service", "repository": "https://github.com/jensg-st/azure-containerapp" }' | direktiv-sync exec build-container.yaml
 functions:
 - id: azure
   image: gcr.io/direktiv/apps/azure:1.0
