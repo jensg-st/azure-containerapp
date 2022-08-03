@@ -1,0 +1,100 @@
+description: >-
+  This workflow waits  for an event of type 'io.direktiv.containerapp.create'. It requires the context attributes 
+  'function' and 'container'. It will create a containerapp environment and a containerapp in Azure with the  
+  provided name and image. 
+
+  Example:
+
+  {
+    "specversion" : "1.0",
+    "type" : "io.direktiv.containerapp.create",
+    "source": "build",
+    "function": "azure",
+    "container": "gcr.io/direktiv/apps/azure:test"
+  }
+
+  After the creation it waits for a delete event but deletes the container app after 1 hour in any case. 
+  The event type for the delete instruction is 'io.direktiv.containerapp.delete'. It requires the name as context to "link" the 
+  delete up to the instance. 
+
+functions:
+- id: azure
+  image: gcr.io/direktiv/apps/azure:1.0
+  type: knative-workflow
+- id: delete
+  workflow: delete
+  type: subflow
+
+
+# Flow waits for a cloudevent of type 'io.direktiv.containerapp.create'
+start:
+  type: event
+  state: create-app
+  event:
+    type: io.direktiv.containerapp.create
+
+states:
+
+# create the app env and the app itself
+- id: create-app
+  type: action
+  action: 
+    function: azure
+    secrets: ["azureUser", "azurePassword", "azureTenantID", "azureResourceGroup"]
+    input:
+      auth:
+        user: jq(.secrets.azureUser)
+        password: jq(.secrets.azurePassword)
+        tenant: jq(.secrets.azureTenantID)
+      commands:
+      - command: >
+          az containerapp env create --name jq(."io.direktiv.containerapp.create".function) 
+            --resource-group jq(.secrets.azureResourceGroup) --location="West Europe"
+      - command: >
+          az containerapp create --ingress external --resource-group jq(.secrets.azureResourceGroup)
+           --name jq(."io.direktiv.containerapp.create".function) 
+           --image jq(."io.direktiv.containerapp.create".container)
+           --target-port 8080 --environment jq(."io.direktiv.containerapp.create".function)
+      - command: az containerapp show -n jq(."io.direktiv.containerapp.create".function) -g app-svc
+    retries:
+      max_attempts: 6
+      delay: PT30S
+      codes: [".*"]
+  transform: 
+    function: jq(."io.direktiv.containerapp.create".function)
+    fqdn: 'https://jq(.return.azure[2].result.properties.configuration.ingress.fqdn)'
+  transition: publish-ready
+
+# publish that the app is up and running with the function name and the url
+- id: publish-ready
+  type: generateEvent
+  event:
+    type: io.direktiv.containerapp.ready
+    source: create
+    data: ''
+    context:
+      function: jq(.function)
+      fqdn: jq(.fqdn)
+  transition: wait-delete
+
+# wait for the delete event or timeout after 15 minutes
+# in both cases we move to 'delete-app' and kill the app
+- id: wait-delete
+  type: consumeEvent
+  timeout: PT15M
+  event:
+    type: io.direktiv.containerapp.delete
+    context:
+      function: 'jq(.function)'
+  transition: delete-app
+  catch:
+  - error: "direktiv.stateTimeout"
+    transition: delete-app
+
+- id: delete-app
+  log: deleting app jq(.function)
+  type: action
+  action: 
+    function: delete
+    input:
+      function: 'jq(.function)'

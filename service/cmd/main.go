@@ -8,8 +8,11 @@ import (
 
 func main() {
 
+	fmt.Println("Starting server")
+
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Hello World")
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprintf(w, "{ \"hello\": \"world\" }")
 	})
 
 	log.Fatal(http.ListenAndServe(":8080", nil))

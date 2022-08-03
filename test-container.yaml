@@ -1,0 +1,38 @@
+# echo '{ "name": "blog/service" }' | direktiv-sync exec test-container.yaml
+
+states:
+- id: request-test
+  type: generateEvent
+  event:
+    type: io.direktiv.containerapp.create
+    source: funcion.tester
+    context: 
+      container:  direktiv.azurecr.io/jq(.name)
+      function: jq(.name | @base64 | ascii_downcase)
+  transition: wait-service
+
+- id: wait-service
+  type: consumeEvent
+  event:
+    type: io.direktiv.containerapp.ready
+    context:
+      function: jq(.name | @base64 | ascii_downcase)
+  timeout: PT15M
+  transition: run-test
+  
+# TESTING HERE!!
+- id: run-test
+  log: SLEEP
+  type: delay
+  duration: PT60S
+  transition: finish
+
+- id: finish
+  type: generateEvent
+  event:
+    type: io.direktiv.containerapp.delete
+    source: funcion.tester
+    context: 
+      function: jq(.name | @base64 | ascii_downcase)
+
+

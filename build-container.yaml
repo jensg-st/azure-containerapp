@@ -1,26 +1,29 @@
+# This function builds a service and deploys it to Azure's conteinr registry
+# It then requests a test container app instance for testing
+# After running the container app it executes tests
+#
+# echo '{ "function": "blog/service", "repository": "https://github.com/jensg-st/azure-containerapp.git" }' | direktiv-sync exec build-container.yaml
 functions:
 - id: azure
   image: gcr.io/direktiv/apps/azure:1.0
   type: knative-workflow
-- id: git
-  image: gcr.io/direktiv/apps/git:1.0
-  type: knative-workflow
 
 states:
-
-
-# - id: clone
-#   type: action
-#   action:
-#     function: git
-#     input: 
-#       commands:
-#       - command: git clone --depth 1 https://github.com/jensg-st/azure-containerapp.git
-
-
+- id: validate
+  type: validate
+  schema:
+    title: Build
+    type: object
+    properties:
+      function:
+        type: string
+        title: container function
+      repository:
+        type: string
+        title: repository name
+  transition: build
   
-
-- id: azure
+- id: build
   type: action
   action:
     function: azure
@@ -31,7 +34,47 @@ states:
         password: jq(.secrets.azurePassword)
         tenant: jq(.secrets.azureTenantID)
       commands:
-      - command: az acr build -r MyRegistry
+      - command: az acr build --registry direktiv -t jq(.function) jq(.repository) -f service/Dockerfile
+  transition: start-app
+
+- id: start-app
+  type: generateEvent
+  event:
+    type: io.direktiv.containerapp.create
+    source: builder
+    data: ''
+    context:
+      function: jq(.function)
+      container: direktiv.azurecr.io/jq(.repository):latest
+  transition: wait
 
 
-# az acr build --registry direktiv https://github.com/jensg-st/azure-containerapp.git -f service/Dockerfile
+- id: wait
+  type: consumeEvent
+  timeout: PT15M
+  event:
+    type: io.direktiv.containerapp.ready
+    context:
+      function: jq(.function)
+  transition: test-app
+
+- id: test-app
+  type: noop
+  log: jq(.)
+  transition: delete-app
+
+
+# test
+
+# https://github.com/Azure/acr/issues/289
+
+
+- id: delete-app
+  type: generateEvent
+  event:
+    type: io.direktiv.containerapp.delete
+    source: builder
+    data: ''
+    context:
+      function: jq(.name)
+      
