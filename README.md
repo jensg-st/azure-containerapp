@@ -23,7 +23,7 @@ states:
 Let's look at the testing flow we're showcasing here. This isn't any different from other CI/CD and software development processes, as it is split into two parts. The first stage is done by the developer, who finishes the code, tests it locally (hopefully), and pushes it to a Git repository. We use Direktiv in the second stage to perform all of the CI/CD activities of building, deploying, and testing the container. It's worth noting that Direktiv, as an event-driven system, may be integrated at any time throughout the CI/CD process so the build process could stay in an esatblished CI/CD system and only the testing phase would be executed by Direktiv. 
 
 <p align="center">
-<img src="testing.png" />
+<img src="assets/testing.png" />
 </p>
 
 ## The Service
