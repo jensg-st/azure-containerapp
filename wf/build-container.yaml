@@ -34,7 +34,7 @@ states:
         password: jq(.secrets.azurePassword)
         tenant: jq(.secrets.azureTenantID)
       commands:
-      - command: az acr build --registry direktiv -t jq(.function) jq(.repository) -f service/Dockerfile
+      - command: az acr build --registry direktiv -t jq(.function) jq(.repository) -f function/Dockerfile
   transition: start-app
 
 - id: start-app

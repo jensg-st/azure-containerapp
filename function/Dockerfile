@@ -2,7 +2,7 @@ FROM golang:1.18.4-buster
 
 WORKDIR /usr/src/app
 
-COPY go.mod ./
+COPY function/go.mod ./
 RUN go mod download && go mod verify
 
 COPY . .

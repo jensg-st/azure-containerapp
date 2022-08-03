@@ -26,7 +26,7 @@ Let's look at the testing flow we're showcasing here. This isn't any different f
 <img src="assets/testing.png" />
 </p>
 
-## The Service
+## The Function
 
 To focus on the flow we left the example very simple. It is a simple function which returns static JSON and all the source code and flows can be found at [https://github.com/jensg-st/azure-containerapp](https://github.com/jensg-st/azure-containerapp). 
 
