@@ -76,5 +76,5 @@ states:
     source: builder
     data: ''
     context:
-      function: jq(.name)
+      function: jq(.function)
       

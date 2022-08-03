@@ -98,8 +98,8 @@ states:
         password: jq(.secrets.azurePassword)
         tenant: jq(.secrets.azureTenantID)
       commands:
-      - command: az containerapp delete --name jq(.function | sub("/"; "-")) --resource-group app-svc --yes
-      - command: az containerapp env delete --name jq(.function | sub("/"; "-")) --resource-group app-svc --yes
+      - command: az containerapp delete --name jq(."io.direktiv.containerapp.create".function | sub("/"; "-")) --resource-group app-svc --yes
+      - command: az containerapp env delete --name jq(."io.direktiv.containerapp.create".function | sub("/"; "-")) --resource-group app-svc --yes
     retries:
       max_attempts: 6
       delay: PT30S
